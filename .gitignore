@@ -218,3 +218,9 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+# Additional environment files
+.env.*
+!.env.example
+
+# Node.js (if used)
+node_modules/
