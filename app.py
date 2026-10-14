@@ -425,12 +425,27 @@ class Handler(BaseHTTPRequestHandler):
         except (BrokenPipeError, ConnectionResetError):
             pass
 
+
     def local_request(self):
-        if self.headers.get('Host') not in ('localhost:8000', '127.0.0.1:8000'):
-            raise AppError('Use http://localhost:8000 to open this app.', 403)
-        origin = self.headers.get('Origin')
-        if origin and origin not in ('http://localhost:8000', 'http://127.0.0.1:8000'):
-            raise AppError('Cross-site requests are not allowed.', 403)
+        host = self.headers.get("Host", "").lower().strip()
+
+        local_hosts = {"localhost:8000", "127.0.0.1:8000"}
+
+        allowed_hosts = local_hosts | {
+            "exam-craft-ai-eight.vercel.app",
+            os.getenv("VERCEL_URL", "").lower(),
+            os.getenv("VERCEL_PROJECT_PRODUCTION_URL", "").lower(),
+        }
+
+        if host not in allowed_hosts:
+            raise AppError("Invalid host.", 403)
+
+        origin = self.headers.get("Origin")
+        if origin:
+            scheme = "http" if host in local_hosts else "https"
+            if origin != f"{scheme}://{host}":
+                raise AppError("Cross-site requests are not allowed.", 403)
+
 
     def do_GET(self):
         try:
